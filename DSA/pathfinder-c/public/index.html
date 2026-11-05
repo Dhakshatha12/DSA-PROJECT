@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PathFinder-C · Graph Algorithms in C</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='8' cy='24' r='5' fill='%230f766e'/%3E%3Ccircle cx='24' cy='8' r='5' fill='%234338ca'/%3E%3Cpath d='M8 24 L24 8' stroke='%230f172a' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" class="logo" aria-hidden="true"><path d="M7 24 L16 12 L25 20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="24" r="4"/><circle cx="16" cy="12" r="4"/><circle cx="25" cy="20" r="4"/></svg>
+    <div>
+      <h1>PathFinder<span>·C</span></h1>
+      <p>Graph algorithms written in C, served from localhost</p>
+    </div>
+  </div>
+  <div class="topstats">
+    <span id="graphStats">–</span>
+    <span id="engine" class="pill pill-wait">Connecting to C engine…</span>
+  </div>
+</header>
+
+<div id="offline" class="offline" hidden>
+  <h2>The C engine is not running</h2>
+  <p id="offlineWhy">This page only draws the map. Every algorithm runs inside the C program, so start it first:</p>
+  <ol>
+    <li><b>Windows:</b> double-click <code>pathfinder.exe</code> in the project folder.<br><b>Mac / Linux:</b> run <code>make</code> then <code>./pathfinder</code> in a terminal.</li>
+    <li>It opens <a href="http://localhost:8080">http://localhost:8080</a> in your browser. Keep its window open while you use the app.</li>
+  </ol>
+  <button id="retryBtn" class="btn primary">Try again</button>
+</div>
+
+<main class="layout">
+  <!-- ============================================================ left -->
+  <aside class="panel left">
+    <section>
+      <h2>Algorithm</h2>
+      <div id="algoList" class="algo-list" role="radiogroup" aria-label="Algorithm"></div>
+    </section>
+
+    <section>
+      <div class="row between"><h2>Route</h2><button id="swapBtn" class="link-btn" title="Swap source and target">⇅ Swap</button></div>
+      <label class="field"><span>Source</span><select id="srcSel"></select></label>
+      <label class="field" id="dstField"><span>Target</span><select id="dstSel"></select></label>
+      <p class="hint">Tip: click a location on the map to set the source, then another for the target.</p>
+      <button id="runBtn" class="btn primary wide">Run in C</button>
+    </section>
+
+    <section>
+      <h2>Playback</h2>
+      <div class="playback">
+        <button id="firstBtn" class="icon-btn" title="First step (Home)" aria-label="First step">⏮</button>
+        <button id="prevBtn" class="icon-btn" title="Previous step (←)" aria-label="Previous step">◀</button>
+        <button id="playBtn" class="icon-btn play" title="Play / pause (Space)" aria-label="Play">▶</button>
+        <button id="nextBtn" class="icon-btn" title="Next step (→)" aria-label="Next step">▶▏</button>
+        <button id="lastBtn" class="icon-btn" title="Last step (End)" aria-label="Last step">⏭</button>
+      </div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <div class="row between small"><span id="stepCounter">No run yet</span><span id="speedLabel">Speed 4</span></div>
+      <input id="speed" type="range" min="1" max="10" value="4" aria-label="Animation speed">
+    </section>
+
+    <section>
+      <h2>Edit graph</h2>
+      <div class="modes" role="radiogroup" aria-label="Edit mode">
+        <button class="mode active" data-mode="select" title="Pick source/target and drag locations">Select</button>
+        <button class="mode" data-mode="addNode" title="Click empty map space to add a location">+ Location</button>
+        <button class="mode" data-mode="addEdge" title="Click two locations to connect them">+ Road</button>
+        <button class="mode" data-mode="delete" title="Click a location or a road to delete it">Delete</button>
+      </div>
+      <label class="field inline"><span>Road weight</span><input id="weightIn" type="number" min="1" max="9999" placeholder="auto"></label>
+      <p class="hint" id="modeHint">Drag locations to move them.</p>
+      <div class="row gap">
+        <button id="resetBtn" class="btn">Reset demo</button>
+        <button id="clearBtn" class="btn">Clear</button>
+      </div>
+      <div class="row gap">
+        <a id="exportBtn" class="btn" href="/api/export" download="graph.txt">Export</a>
+        <label class="btn file-btn">Import<input id="importIn" type="file" accept=".txt,text/plain"></label>
+      </div>
+    </section>
+  </aside>
+
+  <!-- ========================================================== centre -->
+  <section class="stage">
+    <div class="map-wrap">
+      <svg id="map" viewBox="0 0 1000 640" role="img" aria-label="Graph map">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M40 0 L0 0 0 40" fill="none" class="gridline"/>
+          </pattern>
+        </defs>
+        <rect class="map-bg" x="0" y="0" width="1000" height="640" fill="url(#grid)"/>
+        <g id="edgeLayer"></g>
+        <g id="ghostLayer"></g>
+        <g id="nodeLayer"></g>
+      </svg>
+    </div>
+    <div id="stepBanner" class="step-banner"><b>–</b>Choose an algorithm and press <em>Run in C</em>. Each step below comes from the C trace.</div>
+    <div class="legend">
+      <span><i class="dot s-frontier"></i>In heap / queue / stack</span>
+      <span><i class="dot s-current"></i>Processing now</span>
+      <span><i class="dot s-visited"></i>Visited / final</span>
+      <span><i class="bar e-path"></i>Result path</span>
+      <span><i class="bar e-tree"></i>Tree edge</span>
+      <span><i class="bar e-reject"></i>Rejected (cycle)</span>
+      <span class="muted">Weights: approx. km (demo data)</span>
+    </div>
+    <div id="matrixCard" class="card matrix-card" hidden>
+      <div class="row between"><h3>Floyd-Warshall distance matrix</h3><span class="small muted" id="matrixNote"></span></div>
+      <div class="matrix-scroll"><table id="matrix"></table></div>
+    </div>
+    <section class="card log-card">
+      <div class="row between"><h2>Step log</h2><span class="small muted">from the C trace</span></div>
+      <ol id="log" class="log"></ol>
+    </section>
+  </section>
+
+  <!-- =========================================================== right -->
+  <aside class="panel right">
+    <section class="card result">
+      <h2 id="resTitle">Result</h2>
+      <div class="big"><span id="resValue">–</span><small id="resUnit"></small></div>
+      <div id="resPath" class="path-chips"><span class="muted">Run an algorithm to see the route.</span></div>
+      <dl class="stats">
+        <div><dt>Visited</dt><dd id="stVisited">–</dd></div>
+        <div><dt>Edges examined</dt><dd id="stEdges">–</dd></div>
+        <div><dt>DS operations</dt><dd id="stOps">–</dd></div>
+        <div><dt>C run time</dt><dd id="stTime">–</dd></div>
+      </dl>
+    </section>
+
+    <section class="card">
+      <div class="row between"><h2 id="dsTitle">Data structure</h2><span id="dsSize" class="small muted"></span></div>
+      <div id="dsView" class="ds-view"><span class="muted">The heap, queue or stack appears here during playback.</span></div>
+    </section>
+
+
+    <section class="card">
+      <h2>Complexity</h2>
+      <dl class="complexity">
+        <div><dt>Time</dt><dd id="cxTime">–</dd></div>
+        <div><dt>Space</dt><dd id="cxSpace">–</dd></div>
+        <div class="full"><dt>Built on</dt><dd id="cxDs">–</dd></div>
+      </dl>
+    </section>
+  </aside>
+</main>
+
+<div id="modal" class="modal" hidden>
+  <form id="modalForm" class="modal-box">
+    <h3>New location</h3>
+    <label class="field"><span>Name</span><input id="nodeName" maxlength="31" required placeholder="e.g. Library"></label>
+    <div class="row gap end">
+      <button type="button" id="modalCancel" class="btn">Cancel</button>
+      <button type="submit" class="btn primary">Add</button>
+    </div>
+  </form>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

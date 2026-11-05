@@ -1,0 +1,43 @@
+# Project: PathFinder
+# Makefile created by Embarcadero Dev-C++ 6.3
+
+CPP      = g++.exe
+CC       = gcc.exe
+WINDRES  = windres.exe
+OBJ      = obj/strbuf.o obj/graph.o obj/ds.o obj/algorithms.o obj/server.o obj/main.o
+LINKOBJ  = obj/strbuf.o obj/graph.o obj/ds.o obj/algorithms.o obj/server.o obj/main.o
+LIBS     = -L"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/lib" -L"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/x86_64-w64-mingw32/lib" -static-libgcc -lws2_32 -lshell32
+INCS     = -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/include" -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/9.2.0/include" -I"src"
+CXXINCS  = -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/include" -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/9.2.0/include" -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/9.2.0/include/c++" -I"src"
+BIN      = pathfinder.exe
+CXXFLAGS = $(CXXINCS) 
+CFLAGS   = $(INCS) -std=c11
+DEL      = C:\Program Files (x86)\Embarcadero\Dev-Cpp\devcpp.exe INTERNAL_DEL
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before $(BIN) all-after
+
+clean: clean-custom
+	${DEL} $(OBJ) $(BIN)
+
+$(BIN): $(OBJ)
+	$(CC) $(LINKOBJ) -o $(BIN) $(LIBS)
+
+obj/strbuf.o: src/strbuf.c
+	$(CC) -c src/strbuf.c -o obj/strbuf.o $(CFLAGS)
+
+obj/graph.o: src/graph.c
+	$(CC) -c src/graph.c -o obj/graph.o $(CFLAGS)
+
+obj/ds.o: src/ds.c
+	$(CC) -c src/ds.c -o obj/ds.o $(CFLAGS)
+
+obj/algorithms.o: src/algorithms.c
+	$(CC) -c src/algorithms.c -o obj/algorithms.o $(CFLAGS)
+
+obj/server.o: src/server.c
+	$(CC) -c src/server.c -o obj/server.o $(CFLAGS)
+
+obj/main.o: src/main.c
+	$(CC) -c src/main.c -o obj/main.o $(CFLAGS)

@@ -1,0 +1,34 @@
+# PathFinder-C default dataset: 12 Bengaluru localities
+# Weights are approximate road distances in km, simplified for the demo.
+# N <id> <x> <y> <name>
+N 0 300 285 Majestic
+N 1 480 280 MG Road
+N 2 625 255 Indiranagar
+N 3 925 225 Whitefield
+N 4 770 340 Marathahalli
+N 5 560 405 Koramangala
+N 6 665 480 HSR Layout
+N 7 640 590 Electronic City
+N 8 420 440 Jayanagar
+N 9 300 515 Banashankari
+N 10 450 75 Hebbal
+N 11 225 150 Yeshwanthpur
+# E <u> <v> <weight>
+E 0 1 5
+E 0 11 7
+E 0 8 8
+E 0 9 10
+E 1 2 5
+E 1 5 6
+E 1 10 10
+E 2 4 8
+E 2 5 6
+E 4 3 9
+E 4 6 9
+E 5 6 4
+E 6 7 11
+E 5 8 6
+E 8 9 4
+E 9 7 15
+E 10 11 7
+E 10 3 20
